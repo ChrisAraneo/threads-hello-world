@@ -1,0 +1,48 @@
+{
+  "name": "threads-hello-world",
+  "version": "0.0.1",
+  "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/ChrisAraneo/threads-hello-world#readme",
+  "bugs": {
+    "url": "https://github.com/ChrisAraneo/threads-hello-world/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChrisAraneo/threads-hello-world.git"
+  },
+  "license": "MIT",
+  "author": "Krzysztof Pająk (Chris Araneo) <chris.araneo@gmail.com>",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsup src/**/*.ts",
+    "chores": "npm run lint && npm run format",
+    "format": "sort-package-json && prettier --write \"**/*.{ts,js,mjs,json}\" && sort-patterns-file .gitignore .prettierignore",
+    "lint": "eslint --fix",
+    "start": "npm run build && node dist/index.js",
+    "stryker": "npx stryker run",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@chris.araneo/eslint-config": "0.0.45",
+    "@chris.araneo/sort-patterns-file": "0.0.9",
+    "@stryker-mutator/jest-runner": "^9.0.1",
+    "@stryker-mutator/typescript-checker": "^9.0.1",
+    "@swc/core": "^1.12.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.34.1",
+    "@typescript-eslint/parser": "^8.34.1",
+    "eslint": "^9.29.0",
+    "eslint-plugin-jsonc": "^2.20.1",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "jest": "^30.0.0",
+    "normalize-glob": "^0.0.2",
+    "prettier": "^3.5.3",
+    "sort-package-json": "^3.2.1",
+    "ts-jest": "^29.4.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.34.1"
+  }
+}
