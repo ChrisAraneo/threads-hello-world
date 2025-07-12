@@ -5,26 +5,66 @@ interface Vector2D {
   y: number;
 }
 
+interface TimestampedPosition {
+  timestamp: number;
+  position: Vector2D;
+}
+
 interface CelestialBody {
   name: string;
   position: Vector2D;
   velocity: Vector2D;
   radius: number;
   mass: number;
-  trail: Vector2D[];
+  trail: TimestampedPosition[];
   isFixed: boolean;
+  startingTimestamp: number;
+  startingPosition: Vector2D;
+  endTimestamp?: number;
+  endPosition?: Vector2D;
 }
 
 class SolarSystemSimulation {
-  private bodies: CelestialBody[] = SOLAR_BODIES;
-  private timeStep: number = 0.01;
+  private bodies: CelestialBody[] = [];
+  private timeStepInSeconds: number = 0.0001;
   private G: number = 6.6743e-11;
-  private scale: number = 1e-9;
-  private maxTrailLength: number = 50;
-  private simulationTime: number = 0;
+  private simulationTimeInSeconds: number = 0;
   private frameCount: number = 0;
+  private lastTrailRecordTime: number = 0;
+  private trailIntervalSeconds: number = 60;
 
-  constructor() {}
+  constructor() {
+    this.initializeBodies();
+  }
+
+  private initializeBodies(): void {
+    this.bodies = SOLAR_BODIES.map((body) => ({
+      ...body,
+      startingTimestamp: 0,
+      startingPosition: { x: body.position.x, y: body.position.y },
+      trail: [],
+    }));
+  }
+
+  async simulate(seconds: number): Promise<CelestialBody[]> {
+    const steps = seconds / this.timeStepInSeconds;
+
+    for (let step = 0; step < steps; step++) {
+      this.updatePhysics();
+      this.frameCount++;
+    }
+
+    for (const body of this.bodies) {
+      body.endTimestamp = this.simulationTimeInSeconds;
+      body.endPosition = { x: body.position.x, y: body.position.y };
+    }
+
+    const result = this.bodies.map((body) => ({ ...body }));
+
+    this.reset();
+
+    return result;
+  }
 
   private calculateGravitationalForce(
     body1: CelestialBody,
@@ -63,115 +103,46 @@ class SolarSystemSimulation {
       const accelerationX = totalForceX / body.mass;
       const accelerationY = totalForceY / body.mass;
 
-      body.velocity.x += accelerationX * this.timeStep;
-      body.velocity.y += accelerationY * this.timeStep;
+      body.velocity.x += accelerationX * this.timeStepInSeconds;
+      body.velocity.y += accelerationY * this.timeStepInSeconds;
     }
 
     for (const body of this.bodies) {
       if (body.isFixed) continue;
 
-      body.position.x += body.velocity.x * this.timeStep;
-      body.position.y += body.velocity.y * this.timeStep;
+      body.position.x += body.velocity.x * this.timeStepInSeconds;
+      body.position.y += body.velocity.y * this.timeStepInSeconds;
 
-      body.trail.push({
-        x: body.position.x,
-        y: body.position.y,
-      });
-
-      if (body.trail.length > this.maxTrailLength) {
-        body.trail.shift();
+      if (
+        this.simulationTimeInSeconds - this.lastTrailRecordTime >=
+        this.trailIntervalSeconds
+      ) {
+        body.trail.push({
+          timestamp: this.simulationTimeInSeconds,
+          position: {
+            x: body.position.x,
+            y: body.position.y,
+          },
+        });
       }
     }
 
-    this.simulationTime += this.timeStep;
-  }
-
-  public async simulate(steps: number = 1000): Promise<void> {
-    for (let step = 0; step < steps; step++) {
-      this.updatePhysics();
-      this.frameCount++;
-    }
-  }
-
-  public getSystemData(): CelestialBody[] {
-    return this.bodies.map((body) => ({ ...body }));
-  }
-
-  public getSimulationTime(): number {
-    return this.simulationTime;
-  }
-
-  public getFrameCount(): number {
-    return this.frameCount;
-  }
-
-  public getBodyByName(name: string): CelestialBody | undefined {
-    const body = this.bodies.find((b) => b.name === name);
-    return body ? { ...body } : undefined;
-  }
-
-  public getDistanceBetweenBodies(name1: string, name2: string): number {
-    const body1 = this.bodies.find((b) => b.name === name1);
-    const body2 = this.bodies.find((b) => b.name === name2);
-
-    if (!body1 || !body2) return 0;
-
-    const dx = body2.position.x - body1.position.x;
-    const dy = body2.position.y - body1.position.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  public getSystemStats(): {
-    totalMass: number;
-    centerOfMass: Vector2D;
-    totalKineticEnergy: number;
-    totalPotentialEnergy: number;
-  } {
-    let totalMass = 0;
-    let centerX = 0;
-    let centerY = 0;
-    let totalKineticEnergy = 0;
-    let totalPotentialEnergy = 0;
-
-    for (const body of this.bodies) {
-      totalMass += body.mass;
-      centerX += body.position.x * body.mass;
-      centerY += body.position.y * body.mass;
-
-      const speed = Math.sqrt(
-        body.velocity.x * body.velocity.x + body.velocity.y * body.velocity.y,
-      );
-      totalKineticEnergy += 0.5 * body.mass * speed * speed;
+    if (
+      this.simulationTimeInSeconds - this.lastTrailRecordTime >=
+      this.trailIntervalSeconds
+    ) {
+      this.lastTrailRecordTime = this.simulationTimeInSeconds;
     }
 
-    centerX /= totalMass;
-    centerY /= totalMass;
-
-    for (let i = 0; i < this.bodies.length; i++) {
-      for (let j = i + 1; j < this.bodies.length; j++) {
-        const body1 = this.bodies[i];
-        const body2 = this.bodies[j];
-        const distance = this.getDistanceBetweenBodies(body1.name, body2.name);
-
-        if (distance > 0) {
-          totalPotentialEnergy -= (this.G * body1.mass * body2.mass) / distance;
-        }
-      }
-    }
-
-    return {
-      totalMass,
-      centerOfMass: { x: centerX, y: centerY },
-      totalKineticEnergy,
-      totalPotentialEnergy,
-    };
+    this.simulationTimeInSeconds += this.timeStepInSeconds;
   }
 
-  public reset(): void {
-    this.simulationTime = 0;
+  private reset(): void {
+    this.simulationTimeInSeconds = 0;
     this.frameCount = 0;
-    this.bodies = SOLAR_BODIES;
+    this.lastTrailRecordTime = 0;
+    this.initializeBodies();
   }
 }
 
-export { SolarSystemSimulation, CelestialBody, Vector2D };
+export { SolarSystemSimulation, CelestialBody, Vector2D, TimestampedPosition };

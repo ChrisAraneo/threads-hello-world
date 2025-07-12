@@ -2,15 +2,11 @@ import { SolarSystemSimulation } from './solar-system';
 
 async function main(): Promise<void> {
   const simulation = new SolarSystemSimulation();
+  const earthDayInSeconds = 3600 * 2;
 
-  try {
-    await simulation.simulate(2000);
+  const systemData = await simulation.simulate(earthDayInSeconds);
 
-    const systemData = simulation.getSystemData();
-    console.log('Final system state:', JSON.stringify(systemData, null, 2));
-  } catch (error) {
-    console.error('Simulation error:', error);
-  }
+  console.log(JSON.stringify(systemData, null, 2));
 }
 
 process.on('SIGINT', () => {
