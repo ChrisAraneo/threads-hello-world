@@ -19,12 +19,16 @@
     "chores": "npm run lint && npm run format",
     "format": "sort-package-json && prettier --write \"**/*.{ts,js,mjs,json}\" && sort-patterns-file .gitignore .prettierignore",
     "lint": "eslint --fix",
+    "solar-system": "npm run build && node dist/solar-system.js",
     "start": "npm run build && node dist/index.js",
     "stryker": "npx stryker run",
     "test": "jest"
   },
+  "dependencies": {
+    "threads": "^1.7.0"
+  },
   "devDependencies": {
-    "@chris.araneo/eslint-config": "0.0.45",
+    "@chris.araneo/eslint-config": "0.0.62",
     "@chris.araneo/sort-patterns-file": "0.0.9",
     "@stryker-mutator/jest-runner": "^9.0.1",
     "@stryker-mutator/typescript-checker": "^9.0.1",
@@ -44,8 +48,5 @@
     "tsup": "^8.5.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.34.1"
-  },
-  "dependencies": {
-    "threads": "^1.7.0"
   }
 }

@@ -10,6 +10,8 @@ export default [
       'coverage/',
       'package.json',
       'package-lock.json',
+      'tsup.config.ts',
+      'dist/',
     ],
   }),
 ];
